@@ -1,11 +1,11 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 
-interface WebSocketContextType {
+type WebSocketContextValue = {
   socket: WebSocket | null;
-}
+};
 
-const WebSocketContext = createContext<WebSocketContextType>({ socket: null });
+const WebSocketContext = createContext<WebSocketContextValue | null>(null);
 
 export function WebSocketProvider({ children }: { children: ReactNode }) {
   const [socket, setSocket] = useState<WebSocket | null>(null);
@@ -40,4 +40,10 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export const useWebSocket = () => useContext(WebSocketContext);
+export function useWebSocket() {
+  const context = useContext(WebSocketContext);
+  if (!context) {
+    throw new Error('useWebSocket must be used within a WebSocketProvider');
+  }
+  return context;
+}
