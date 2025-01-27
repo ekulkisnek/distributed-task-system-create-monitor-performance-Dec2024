@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 
 interface WebSocketContextType {
@@ -7,7 +6,7 @@ interface WebSocketContextType {
 
 const WebSocketContext = createContext<WebSocketContextType>({ socket: null });
 
-export function WebSocketProvider({ children }: { children: ReactNode; }) {
+export function WebSocketProvider({ children }: { children: ReactNode }) {
   const [socket, setSocket] = useState<WebSocket | null>(null);
 
   useEffect(() => {
