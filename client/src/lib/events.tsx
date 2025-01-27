@@ -1,50 +1,29 @@
+import { useQuery } from "@tanstack/react-query";
+import { createContext, useContext, ReactNode } from 'react';
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+interface EventsContextType {
+  isConnected: boolean;
+}
 
-type EventsContextType = {
-  connected: boolean;
-};
-
-const EventsContext = createContext<EventsContextType>({ connected: false });
+const EventsContext = createContext<EventsContextType>({ isConnected: false });
 
 export function EventsProvider({ children }: { children: ReactNode }) {
-  const [connected, setConnected] = useState(false);
-  const queryClient = useQueryClient();
-
-  useEffect(() => {
-    const events = new EventSource('/api/events');
-
-    events.onopen = () => {
-      setConnected(true);
-    };
-
-    events.onerror = () => {
-      setConnected(false);
-    };
-
-    events.addEventListener('task-update', () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
-    });
-
-    events.addEventListener('worker-update', () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/workers'] });
-    });
-
-    events.addEventListener('metrics-update', () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/metrics'] });
-    });
-
-    return () => {
-      events.close();
-    };
-  }, [queryClient]);
+  const { data: status } = useQuery({
+    queryKey: ['status'],
+    queryFn: async () => {
+      const response = await fetch('/api/status');
+      return response.json();
+    },
+    refetchInterval: 1000
+  });
 
   return (
-    <EventsContext.Provider value={{ connected }}>
+    <EventsContext.Provider value={{ isConnected: !!status?.connected }}>
       {children}
     </EventsContext.Provider>
   );
 }
 
-export const useEvents = () => useContext(EventsContext);
+export function useEvents() {
+  return useContext(EventsContext);
+}
