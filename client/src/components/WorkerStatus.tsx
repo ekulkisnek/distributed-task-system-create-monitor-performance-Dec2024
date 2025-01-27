@@ -2,25 +2,14 @@ import { useQuery } from "@tanstack/react-query";
 import { Worker } from "@db/schema";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { useWebSocket } from "@/lib/websocket";
+import { useEvents } from "@/lib/events";
 import { useEffect } from "react";
 
 export default function WorkerStatus() {
-  const { socket } = useWebSocket();
-  const { data: workers, refetch } = useQuery<Worker[]>({
+  const { connected } = useEvents();
+  const { data: workers } = useQuery<Worker[]>({
     queryKey: ["/api/workers"],
   });
-
-  useEffect(() => {
-    if (!socket) return;
-
-    socket.addEventListener("message", (event) => {
-      const data = JSON.parse(event.data);
-      if (data.type === "WORKER_UPDATE") {
-        refetch();
-      }
-    });
-  }, [socket, refetch]);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

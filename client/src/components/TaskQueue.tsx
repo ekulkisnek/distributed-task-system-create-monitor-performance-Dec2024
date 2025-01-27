@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useWebSocket } from "@/lib/websocket";
+import { useEvents } from "@/lib/events";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
@@ -7,23 +7,12 @@ import { Task } from "@db/schema";
 import { useEffect } from "react";
 
 export default function TaskQueue() {
-  const { socket } = useWebSocket();
+  const { connected } = useEvents();
   const { toast } = useToast();
 
-  const { data: tasks, refetch } = useQuery<Task[]>({
+  const { data: tasks } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
   });
-
-  useEffect(() => {
-    if (!socket) return;
-
-    socket.addEventListener("message", (event) => {
-      const data = JSON.parse(event.data);
-      if (data.type === "TASK_UPDATE") {
-        refetch();
-      }
-    });
-  }, [socket, refetch]);
 
   const getStatusColor = (status: string) => {
     switch (status) {

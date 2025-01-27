@@ -1,26 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { useWebSocket } from "@/lib/websocket";
+import { useEvents } from "@/lib/events";
 import { useEffect } from "react";
 import { Metric } from "@db/schema";
 
 export default function MetricsDisplay() {
-  const { socket } = useWebSocket();
-  const { data: metrics, refetch } = useQuery<Metric[]>({
+  const { connected } = useEvents();
+  const { data: metrics } = useQuery<Metric[]>({
     queryKey: ["/api/metrics"],
   });
-
-  useEffect(() => {
-    if (!socket) return;
-
-    socket.addEventListener("message", (event) => {
-      const data = JSON.parse(event.data);
-      if (data.type === "METRICS_UPDATE") {
-        refetch();
-      }
-    });
-  }, [socket, refetch]);
 
   const formatData = (metrics: Metric[] = []) => {
     return metrics.map(m => ({

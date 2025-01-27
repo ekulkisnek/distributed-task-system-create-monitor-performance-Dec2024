@@ -1,32 +1,32 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { WebSocketServer, WebSocket } from "ws";
+import { Response } from "express";
 import { db } from "@db";
 import { tasks, workers, metrics } from "@db/schema";
 import { eq } from "drizzle-orm";
 
 export function registerRoutes(app: Express): Server {
   const httpServer = createServer(app);
-  const wss = new WebSocketServer({ 
-    server: httpServer,
-    path: "/ws"
-  });
+  const clients = new Set<Response>();
 
-  // WebSocket handling
-  wss.on('connection', (ws) => {
-    console.log('Client connected');
+  app.get('/api/events', (req, res) => {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
 
-    ws.on('close', () => {
-      console.log('Client disconnected');
+    clients.add(res);
+    console.log('Client connected to SSE');
+
+    req.on('close', () => {
+      clients.delete(res);
+      console.log('Client disconnected from SSE');
     });
   });
 
-  // Broadcast updates to all clients
-  const broadcast = (message: any) => {
-    wss.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify(message));
-      }
+  const broadcast = (event: string, data: any = {}) => {
+    const message = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+    clients.forEach(client => {
+      client.write(message);
     });
   };
 
@@ -50,7 +50,7 @@ export function registerRoutes(app: Express): Server {
         payload: JSON.parse(payload),
       }).returning();
 
-      broadcast({ type: 'TASK_UPDATE' });
+      broadcast('task-update');
       res.json(newTask[0]);
     } catch (error) {
       console.error('Error creating task:', error);
@@ -93,7 +93,7 @@ export function registerRoutes(app: Express): Server {
           .where(eq(workers.id, worker.id));
       }
 
-      broadcast({ type: 'WORKER_UPDATE' });
+      broadcast('worker-update');
     } catch (error) {
       console.error('Error updating workers:', error);
     }
@@ -114,7 +114,7 @@ export function registerRoutes(app: Express): Server {
         });
       }
 
-      broadcast({ type: 'METRICS_UPDATE' });
+      broadcast('metrics-update');
     } catch (error) {
       console.error('Error collecting metrics:', error);
     }
