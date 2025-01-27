@@ -2,11 +2,11 @@ import { useRef, useEffect } from 'react';
 import * as d3 from 'd3';
 import { useQuery } from '@tanstack/react-query';
 import { Worker } from '@db/schema';
-import { useWebSocket } from '@/lib/websocket';
+import { useEvents } from '@/lib/events';
 
 export default function SystemTopology() {
   const svgRef = useRef<SVGSVGElement>(null);
-  const { socket } = useWebSocket();
+  const { isConnected } = useEvents();
 
   const { data: workers } = useQuery<Worker[]>({
     queryKey: ["/api/workers"],
