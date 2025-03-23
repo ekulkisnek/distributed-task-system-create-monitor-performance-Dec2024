@@ -3,6 +3,8 @@
 
 A real-time task management system built with React, Express, and PostgreSQL, featuring live updates via Server-Sent Events (SSE).
 
+![image](image.png)
+
 ## Features
 
 - **Real-time Updates**: Uses SSE for live task, worker, and metrics updates
